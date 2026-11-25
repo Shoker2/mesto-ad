@@ -1,21 +1,20 @@
 export const likeCard = async (cardId, likeButton, likeCountElement, isLiked, changeLikeStatus) => {
+  likeButton.disabled = true;
   try {
     const updatedCard = await changeLikeStatus(cardId, isLiked);
-    likeButton.classList.toggle("card__like-button_is-active");
+    likeButton.classList.toggle("card__like-button_is-active", !isLiked);
     likeCountElement.textContent = updatedCard.likes.length;
     return updatedCard;
   } catch (err) {
     console.error("Ошибка при изменении лайка:", err);
+  } finally {
+    likeButton.disabled = false;
   }
 };
 
 export const deleteCard = async (cardId, cardElement, deleteFromServer) => {
-  try {
-    await deleteFromServer(cardId);
-    cardElement.remove();
-  } catch (err) {
-    console.error("Ошибка при удалении карточки:", err);
-  }
+  await deleteFromServer(cardId);
+  cardElement.remove();
 };
 
 const getTemplate = () => {
@@ -52,7 +51,7 @@ export const createCardElement = (
     deleteButton.remove();
   }
 
-  if (onLikeIcon && isOwner !== undefined) {
+  if (onLikeIcon) {
     likeButton.addEventListener("click", () => {
       const isCurrentlyLiked = likeButton.classList.contains("card__like-button_is-active");
       onLikeIcon(data._id, likeButton, likeCountElement, isCurrentlyLiked);

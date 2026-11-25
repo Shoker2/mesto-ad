@@ -50,7 +50,7 @@ const disableSubmitButton = (buttonElement, settings) => {
 
 const enableSubmitButton = (buttonElement, settings) => {
   buttonElement.classList.remove(settings.inactiveButtonClass);
-  buttonElement.disabled = false;
+  buttonElement.disabled = buttonElement.getAttribute("aria-busy") === "true";
 };
 
 const toggleButtonState = (inputList, buttonElement, settings) => {
@@ -83,11 +83,7 @@ export const clearValidation = (formElement, settings) => {
     hideInputError(formElement, inputElement, settings);
   });
 
-  if (inputList.length === 0) {
-    enableSubmitButton(buttonElement, settings);
-  } else {
-    disableSubmitButton(buttonElement, settings);
-  }
+  toggleButtonState(inputList, buttonElement, settings);
 };
 
 export const enableValidation = (settings) => {

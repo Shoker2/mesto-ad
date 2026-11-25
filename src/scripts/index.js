@@ -50,11 +50,10 @@ const avatarForm = avatarFormModalWindow.querySelector(".popup__form");
 const avatarInput = avatarForm.querySelector(".popup__input");
 
 const removeCardModalWindow = document.querySelector(".popup_type_remove-card");
-const removeCardForm = removeCardModalWindow?.querySelector(".popup__form");
+const removeCardButton = removeCardModalWindow.querySelector(".popup__button");
 
 const cardInfoModalWindow = document.querySelector(".popup_type_info");
 const cardInfoModalInfoList = cardInfoModalWindow.querySelector(".popup__info");
-const cardInfoModalText = cardInfoModalWindow.querySelector(".popup__text");
 const cardInfoModalUserList = cardInfoModalWindow.querySelector(".popup__list");
 
 const infoDefinitionTemplate = document.getElementById("popup-info-definition-template");
@@ -94,19 +93,14 @@ const handlePreviewPicture = ({ name, link }) => {
 };
 
 const setButtonLoading = (button, isLoading, defaultText, loadingText) => {
-  if (isLoading) {
-    button.textContent = loadingText;
-    button.disabled = true;
-  } else {
-    button.textContent = defaultText;
-    button.disabled = false;
-  }
+  button.setAttribute("aria-busy", String(isLoading));
+  button.textContent = isLoading ? loadingText : defaultText;
+  button.disabled = isLoading || (button.form?.matches(":invalid") ?? false);
 };
 
 const openRemoveCardModal = (cardId, cardElement) => {
   cardToDeleteId = cardId;
   cardToDeleteElement = cardElement;
-  clearValidation(removeCardForm, validationSettings);
   openModalWindow(removeCardModalWindow);
 };
 
@@ -132,8 +126,6 @@ const handleInfoClick = async (cardId) => {
     cardInfoModalInfoList.append(
       createInfoItem("Количество лайков:", card.likes.length.toString())
     );
-
-    cardInfoModalText.textContent = "Лайкнули:";
 
     if (card.likes.length > 0) {
       card.likes.forEach((user) => {
@@ -225,22 +217,23 @@ const handleCardFormSubmit = async (evt) => {
   }
 };
 
-const handleRemoveCardSubmit = async (evt) => {
-  evt.preventDefault();
-  const submitButton = removeCardForm.querySelector(".popup__button");
-  const defaultText = submitButton.textContent;
+const handleRemoveCardConfirm = async () => {
+  const cardElement = cardToDeleteElement;
+  const defaultText = removeCardButton.textContent;
 
-  setButtonLoading(submitButton, true, defaultText, "Удаление...");
+  setButtonLoading(removeCardButton, true, defaultText, "Удаление...");
 
   try {
-    await deleteCard(cardToDeleteId, cardToDeleteElement, deleteCardFromServer);
-    closeModalWindow(removeCardModalWindow);
-    cardToDeleteId = null;
-    cardToDeleteElement = null;
+    await deleteCard(cardToDeleteId, cardElement, deleteCardFromServer);
+    if (cardToDeleteElement === cardElement) {
+      closeModalWindow(removeCardModalWindow);
+      cardToDeleteId = null;
+      cardToDeleteElement = null;
+    }
   } catch (err) {
     console.error("Ошибка при удалении карточки:", err);
   } finally {
-    setButtonLoading(submitButton, false, defaultText, "Удаление...");
+    setButtonLoading(removeCardButton, false, defaultText, "Удаление...");
   }
 };
 
@@ -249,9 +242,7 @@ profileForm.addEventListener("submit", handleProfileFormSubmit);
 cardForm.addEventListener("submit", handleCardFormSubmit);
 avatarForm.addEventListener("submit", handleAvatarFormSubmit);
 
-if (removeCardForm) {
-  removeCardForm.addEventListener("submit", handleRemoveCardSubmit);
-}
+removeCardButton.addEventListener("click", handleRemoveCardConfirm);
 
 openProfileFormButton.addEventListener("click", () => {
   profileTitleInput.value = profileTitle.textContent;
